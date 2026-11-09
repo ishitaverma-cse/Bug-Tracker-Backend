@@ -4,6 +4,7 @@ import cors from 'cors'
 import mongoose from 'mongoose'
 import authRoutes from './routes/authRoutes.js'
 import projectRoutes from './routes/projectRoutes.js'
+import ticketRoutes from './routes/ticketRoutes.js'
 
 dotenv.config()
 
@@ -18,6 +19,9 @@ app.use('/api/auth', authRoutes)
 
 // Project Management Routes
 app.use('/api/projects', projectRoutes)
+
+// Ticket Management Routes
+app.use('/api/tickets', ticketRoutes)
 
 // Test Route
 app.get('/', (req, res) => {
