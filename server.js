@@ -3,6 +3,7 @@ import dotenv from 'dotenv'
 import cors from 'cors'
 import mongoose from 'mongoose'
 import authRoutes from './routes/authRoutes.js'
+import projectRoutes from './routes/projectRoutes.js'
 
 dotenv.config()
 
@@ -14,6 +15,9 @@ app.use(express.json())
 
 // Authentication Routes
 app.use('/api/auth', authRoutes)
+
+// Project Management Routes
+app.use('/api/projects', projectRoutes)
 
 // Test Route
 app.get('/', (req, res) => {
