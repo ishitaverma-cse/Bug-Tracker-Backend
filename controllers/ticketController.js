@@ -125,17 +125,21 @@ export const createTicket = async (req, res) => {
     }
 }
 
-// Get Tickets By Project
+
+// Get Tickets By Project (with Filtering & Search)
 export const getTicketsByProject = async (req, res) => {
     try {
         const { projectId } = req.params
+        const { status, priority, assignee, search } = req.query
 
+        // Validate Project ID
         if (!mongoose.Types.ObjectId.isValid(projectId)) {
             return res.status(400).json({
                 message: 'Invalid project ID',
             })
         }
 
+        // Check Project Access
         const { project, authorized } = await checkProjectAccess(
             projectId,
             req.user.id
@@ -153,7 +157,76 @@ export const getTicketsByProject = async (req, res) => {
             })
         }
 
-        const tickets = await Ticket.find({ projectId })
+        // Validate Status
+        const validStatuses = [
+            'Open',
+            'In Progress',
+            'Resolved',
+            'Closed',
+        ]
+
+        if (status && !validStatuses.includes(status)) {
+            return res.status(400).json({
+                message: 'Invalid status filter',
+            })
+        }
+
+        // Validate Priority
+        const validPriorities = ['Low', 'Medium', 'High']
+
+        if (priority && !validPriorities.includes(priority)) {
+            return res.status(400).json({
+                message: 'Invalid priority filter',
+            })
+        }
+
+        // Validate Assignee ID
+        if (
+            assignee &&
+            assignee !== 'unassigned' &&
+            !mongoose.Types.ObjectId.isValid(assignee)
+        ) {
+            return res.status(400).json({
+                message: 'Invalid assignee filter',
+            })
+        }
+
+        // Build Filter Query
+        const filter = {
+            projectId,
+        }
+
+        if (status) {
+            filter.status = status
+        }
+
+        if (priority) {
+            filter.priority = priority
+        }
+
+        if (assignee === 'unassigned') {
+            filter.assignee = null
+        } else if (assignee) {
+            filter.assignee = assignee
+        }
+
+        // Keyword Search: Title or Description
+        if (search && search.trim()) {
+            const escapedSearch = search.trim().replace(
+                /[.*+?^${}()|[\]\\]/g,
+                '\\$&'
+            )
+
+            const searchRegex = new RegExp(escapedSearch, 'i')
+
+            filter.$or = [
+                { title: searchRegex },
+                { description: searchRegex },
+            ]
+        }
+
+        // Fetch Filtered Tickets
+        const tickets = await Ticket.find(filter)
             .populate('assignee', 'name email')
             .populate('projectId', 'title')
             .sort({ createdAt: -1 })
@@ -169,6 +242,7 @@ export const getTicketsByProject = async (req, res) => {
         })
     }
 }
+
 
 // Update Ticket
 export const updateTicket = async (req, res) => {
