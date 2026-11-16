@@ -125,7 +125,6 @@ export const createTicket = async (req, res) => {
     }
 }
 
-
 // Get Tickets By Project (with Filtering & Search)
 export const getTicketsByProject = async (req, res) => {
     try {
